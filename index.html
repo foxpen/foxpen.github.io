@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trading Setup Dashboard — Dark (v7)</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#161a22;
+    --panel-2:#1b2130;
+    --text:#e6eaf2;
+    --muted:#9aa4b2;
+    --accent:#27d17f;
+    --accent-2:#15a864;
+    --gold:#E0B347;
+    --gold2:#ffd56a;
+    --danger:#ff6b6b;
+    --shadow:0 8px 30px rgba(0,0,0,.35);
+    --border:1px solid rgba(255,255,255,.06);
+    --card-radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:radial-gradient(1200px 600px at -10% -10%,#1b2130 0%, transparent 60%), 
+               radial-gradient(1200px 600px at 110% 110%,#1b2130 0%, transparent 60%), 
+               var(--bg);
+    color:var(--text);
+    font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    line-height:1.45;
+  }
+  .wrap{max-width:1200px;margin:40px auto;padding:0 20px}
+  header{
+    display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:24px;
+  }
+  .title{font-size:28px;font-weight:800;letter-spacing:.2px}
+  .meta{color:var(--muted);font-size:14px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{
+    background:rgba(255,255,255,.06);border:var(--border);color:var(--text);
+    padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;letter-spacing:.2px
+  }
+  .btn:hover{background:rgba(255,255,255,.1)}
+  .btn-danger{border-color: rgba(255,107,107,.5); background: rgba(255,107,107,.08)}
+  .btn-danger:hover{background: rgba(255,107,107,.15)}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* Layout with sidebar */
+  .layout{display:grid;grid-template-columns:1fr;gap:20px;align-items:start}
+  @media (min-width: 1100px){
+    .layout{grid-template-columns:1fr 320px;}
+  }
+
+  .cards{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+  .card{
+    grid-column:span 6;
+    background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);
+    border:var(--border);
+    border-radius:var(--card-radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  @media (max-width: 900px){ .card{grid-column:span 12;} }
+  .card header{
+    padding:16px 18px;
+    border-bottom:var(--border);
+    background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+  }
+  .card h2{margin:0;font-size:16px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+  .card .content{padding:6px 14px 14px 14px}
+  ul.list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  @media (max-width:700px){ ul.list{grid-template-columns:1fr;} }
+  .item{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,.02);
+    border:var(--border);
+    padding:10px 12px;border-radius:12px;
+    transition:transform .1s ease, border-color .1s ease;
+  }
+  .item:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.12)}
+  input[type="checkbox"]{
+    appearance:none;-webkit-appearance:none;width:18px;height:18px;border-radius:6px;
+    border:1.5px solid rgba(255,255,255,.25);display:inline-grid;place-content:center;
+    background:transparent;cursor:pointer;transition:all .15s ease;
+  }
+  input[type="checkbox"]::before{
+    content:""; width:10px;height:10px;transform:scale(0);transition:transform .15s ease;
+    clip-path:polygon(14% 44%, 0 65%, 50% 100%, 100% 18%, 80% 0, 43% 62%);
+    background:var(--accent);
+  }
+  input[type="checkbox"]:checked{border-color:rgba(39,209,127,.8);background:rgba(39,209,127,.12)}
+  input[type="checkbox"]:checked::before{transform:scale(1)}
+  .label{flex:1}
+  .pill{
+    font-size:12px;color:#0b1b12;background:rgba(39,209,127,.85);padding:4px 8px;border-radius:999px;font-weight:700;letter-spacing:.2px
+  }
+  .progress{
+    display:flex;align-items:center;gap:10px;margin:10px 0 2px;padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:var(--border)
+  }
+  .bar{flex:1;height:12px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+  .bar > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .2s ease}
+  .percent{font-variant-numeric:tabular-nums;font-weight:800}
+
+  /* Subheaders inside lists */
+  .subheader{
+    grid-column:1/-1;
+    margin-top:4px;
+    padding:6px 10px;
+    font-weight:800;
+    letter-spacing:.3px;
+    color:var(--gold);
+    background:rgba(224,179,71,.10);
+    border:1px solid rgba(224,179,71,.18);
+    border-radius:10px;
+  }
+
+  /* Focus section (Během obchodu) */
+  .focus {
+    margin-top:18px;
+    background: linear-gradient(180deg, rgba(224,179,71,.10), rgba(224,179,71,.05));
+    border: 1px solid rgba(224,179,71,.35);
+    border-radius: var(--card-radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .focus header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 18px;border-bottom:1px solid rgba(224,179,71,.25);
+    background:linear-gradient(180deg, rgba(224,179,71,.18), transparent);
+  }
+  .focus h2{margin:0;font-size:16px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
+  .focus .content{padding:10px 16px 16px 16px}
+  .focus .item{background:rgba(224,179,71,.06);border:1px solid rgba(224,179,71,.20)}
+  .focus .progress{background:rgba(224,179,71,.06);border:1px solid rgba(224,179,71,.20)}
+  .focus .bar{background:rgba(224,179,71,.18)}
+  .focus .bar > span{background:linear-gradient(90deg, var(--gold), var(--gold2))}
+  .focus .pill{background:var(--gold); color:#141109}
+
+  /* Sidebar: Forex Market Sessions */
+  aside#forexPanel{
+    position:sticky; top:24px;
+    background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);
+    border:var(--border);
+    border-radius:var(--card-radius);
+    box-shadow:var(--shadow);
+    padding:14px;
+  }
+  #forexHeader{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;margin-bottom:10px;border-bottom:var(--border);padding-bottom:10px
+  }
+  #forexHeader h3{margin:0;font-size:14px;letter-spacing:.6px;text-transform:uppercase}
+  .clock{font-weight:900;font-size:16px}
+  .session{
+    display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;
+    padding:10px;border-radius:12px;border:var(--border);background:rgba(255,255,255,.02);margin-bottom:8px
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:12px;
+    padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.1);
+  }
+  .open{color:#0b1b12;background:rgba(39,209,127,.9);border-color:rgba(39,209,127,.6)}
+  .closed{color:#2a0c0c;background:rgba(255,107,107,.8);border-color:rgba(255,107,107,.5)}
+  .row-muted{color:var(--muted);font-size:12px}
+  .ops{font-size:12px}
+  .flag{font-size:16px}
+  .toggleWrap{display:none;margin-bottom:10px}
+  .toggleBtn{display:inline-flex;gap:8px;align-items:center;border:var(--border);background:rgba(255,255,255,.06);padding:8px 10px;border-radius:10px;cursor:pointer}
+  .toggleBtn:hover{background:rgba(255,255,255,.1)}
+
+  @media (max-width: 1099px){
+    aside#forexPanel{position:static; order:2}
+    .toggleWrap{display:block}
+    #forexContent.collapsed{display:none}
+  }
+
+  /* Trades mini chart + table */
+  .chartWrap{
+    margin-top:18px;
+    background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);
+    border:var(--border);
+    border-radius:var(--card-radius);
+    box-shadow:var(--shadow);
+    padding:14px;
+  }
+  .chartHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .legend{font-size:12px;color:var(--muted)}
+  canvas{width:100%;height:220px;border-radius:10px;background:rgba(255,255,255,.02)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .tooltip{
+    position:absolute;pointer-events:none;background:#0b0f14;color:#fff;border:1px solid rgba(255,255,255,.15);
+    padding:6px 8px;border-radius:8px;font-size:12px;transform:translate(-50%,-120%);white-space:nowrap;display:none
+  }
+  table{
+    width:100%; border-collapse:collapse; margin-top:12px; font-size:14px;
+    border:var(--border); border-radius:12px; overflow:hidden;
+  }
+  th, td{
+    padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  th{ text-align:left; color:var(--muted); font-weight:700; letter-spacing:.2px }
+  tr:nth-child(even){ background:rgba(255,255,255,.02) }
+  .tag{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.15); font-weight:800; font-size:12px}
+
+  /* Modal Save Trade */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
+    align-items:center; justify-content:center; padding:20px; z-index:999;
+    opacity:0; transition:opacity .2s ease;
+  }
+  .overlay.show{ display:flex; opacity:1; }
+  .modal{
+    width:100%; max-width:520px; background:linear-gradient(180deg,var(--panel) 0%, var(--panel-2) 100%);
+    border:var(--border); border-radius:16px; box-shadow:var(--shadow);
+    transform: translateY(10px); transition: transform .2s ease;
+  }
+  .overlay.show .modal{ transform: translateY(0); }
+  .modal header{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 16px; border-bottom:var(--border); background:linear-gradient(180deg,rgba(255,255,255,.05),transparent);
+  }
+  .modal h3{ margin:0; font-size:16px; letter-spacing:.4px; text-transform:uppercase }
+  .closeX{ background:transparent; border:var(--border); color:var(--text); padding:6px 8px; border-radius:8px; cursor:pointer }
+  .modal .body{ padding:14px 16px; display:grid; gap:12px }
+  .field label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px }
+  .input, .textarea{
+    width:100%; background:rgba(255,255,255,.06); border:var(--border); color:var(--text);
+    padding:10px 12px; border-radius:10px; font-size:14px;
+  }
+  .quick{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:2px;
+  }
+  .chip{
+    border:var(--border); background:rgba(255,255,255,.06); color:var(--text);
+    padding:6px 10px; border-radius:999px; cursor:pointer; font-weight:700; font-size:12px;
+  }
+  .chip:hover{ background:rgba(255,255,255,.1) }
+  .modal footer{
+    display:flex; gap:10px; justify-content:flex-end; padding:12px 16px; border-top:var(--border);
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed; right:18px; bottom:18px; background:#0b0f14; color:var(--text);
+    border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:10px 14px; z-index:1000;
+    box-shadow:var(--shadow); display:none;
+  }
+  .toast.show{ display:block; animation:fadein .2s ease }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="title">Trading Setup Dashboard <span class="muted">v7</span></div>
+        <div class="meta">Dark mode • Interaktivní checkboxy • Uloží se automaticky (prohlížeč)</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="btnSave">Exportovat stav</button>
+        <button class="btn" id="btnLoad">Importovat stav</button>
+        <button class="btn" id="btnReset">Vynulovat</button>
+        <button class="btn" id="btnSaveTrade">💾 Uložit obchod</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- MAIN COLUMN -->
+      <main>
+        <div class="progress">
+          <strong>Celková kvalita</strong>
+          <div class="bar"><span id="totalBar"></span></div>
+          <div class="percent"><span id="totalPct">0</span>%</div>
+        </div>
+        <div class="muted">Počet zaškrtnutých položek z celého checklistu.</div>
+
+        <section class="cards" id="cards"></section>
+
+        <!-- Během obchodu -->
+        <section class="focus" id="focus">
+          <header>
+            <h2>⚡ Během obchodu</h2>
+            <span class="pill" data-focus-pill>0%</span>
+          </header>
+          <div class="content">
+            <div class="progress">
+              <div class="bar"><span data-focus-bar></span></div>
+              <div class="percent"><span data-focus-pct>0</span>%</div>
+            </div>
+            <ul class="list" id="focus-list">
+              <li class="item"><input type="checkbox" id="focus-0"><label class="label" for="focus-0">Dodržuji plán a nenechávám se ovlivnit emocemi (chamtivost, strach)</label></li>
+              <li class="item"><input type="checkbox" id="focus-1"><label class="label" for="focus-1">Nedávám zbytečně brzy SL na BE (ideálně vůbec)</label></li>
+              <li class="item"><input type="checkbox" id="focus-2"><label class="label" for="focus-2">Nesleduji graf až moc (Kontrola je strach)</label></li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Trades mini chart + table -->
+        <section class="chartWrap">
+          <div class="chartHeader">
+            <h3 style="margin:0">📈 Historie obchodů (kvalita setupu)</h3>
+            <div class="legend">Zobrazuje posledních <strong>30</strong> uložených obchodů</div>
+          </div>
+          <div style="position:relative">
+            <canvas id="chart" width="1000" height="240"></canvas>
+            <div class="tooltip" id="tooltip"></div>
+          </div>
+          <div class="toolbar" style="margin-top:10px">
+            <button class="btn" id="btnExportTrades">Export CSV</button>
+            <button class="btn btn-danger" id="btnClearTrades">Vymazat historii</button>
+          </div>
+
+          <table id="tradesTable">
+            <thead>
+              <tr>
+                <th style="width:60px">#</th>
+                <th style="width:200px">Datum</th>
+                <th style="width:120px">Kvalita (%)</th>
+                <th style="width:120px">Symbol</th>
+                <th>Komentář</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <div class="hint">Obchod uložíš tlačítkem „Uložit obchod“ nahoře – spočítá se aktuální kvalita a přidá se nový bod do grafu i do tabulky. Data se ukládají lokálně v prohlížeči.</div>
+        </section>
+
+      </main>
+
+      <!-- SIDEBAR -->
+      <aside id="forexPanel">
+        <div class="toggleWrap">
+          <button class="toggleBtn" id="toggleForex">📈 Forex Sessions</button>
+        </div>
+        <div id="forexContent">
+          <div id="forexHeader">
+            <h3>🌍 Forex Market Sessions</h3>
+            <div class="clock" id="clock">--:--</div>
+          </div>
+          <div id="sessions"></div>
+          <div class="row-muted">Časy jsou v pásmu Praha (Europe/Prague). Víkendy jsou zavřené.</div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>© Trading Checklist • Statický HTML soubor — lze vložit do Notionu jako „Embed“.</footer>
+  </div>
+
+  <!-- Modal Save Trade -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header>
+        <h3 id="modalTitle">💾 Uložit obchod</h3>
+        <button class="closeX" id="btnCloseX">✖</button>
+      </header>
+      <div class="body">
+        <div class="quick">
+          <button class="chip" data-fill="BTC">BTC</button>
+          <button class="chip" data-fill="EUR/USD">EUR/USD</button>
+          <button class="chip" data-fill="NASQ">NASQ</button>
+          <button class="chip" data-fill="SOL">SOL</button>
+          <button class="chip" data-fill="GOLD">GOLD</button>
+        </div>
+        <div class="field">
+          <label for="inpSymbol">Symbol</label>
+          <input class="input" id="inpSymbol" placeholder="např. BTC, NASQ, EUR/USD" />
+        </div>
+        <div class="field">
+          <label for="inpComment">Komentář (volitelné)</label>
+          <textarea class="textarea" id="inpComment" rows="3" placeholder="Krátká poznámka k obchodu"></textarea>
+        </div>
+      </div>
+      <footer>
+        <button class="btn" id="btnCancel">Zrušit</button>
+        <button class="btn" id="btnConfirm">✅ Uložit</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Obchod uložen ✅</div>
+
+<script>
+/* ---------------- Checklist logic ---------------- */
+const STORAGE_KEY = 'trading_checklist_state';
+const TRADES_KEY = 'trades_history_v1';
+const cards = document.getElementById('cards');
+
+const data = [
+  {section:"Analýza", items:[
+    "4H Swing MS","4H Internal MS","15m Swing MS","15m Internal MS",
+    "Daily S&D","4H S&D","FVG 50%","0.382","GP","Balance levels",
+    "15m S&D","nPOC","Volume","dOpen","Asia session",
+    "Premium / Discount","Entry Model","Daily Bias","VWAP","wOpen",
+    "Čas otevření trhu (15:40–16:10)","DXY"
+  ]},
+  {section:"Vstup", items:[
+    {subheader:"1min"},
+    "Fibonacchiho levely","S/D zóny","Balanční levely","FVG zóny (méně)","Likvidita","Fixed range",
+    {subheader:"5min"},
+    "Fibonacchiho levely","FVG zóny (často)","Balanční levely","S/D zóny","Likvidita","Fixed range"
+  ]},
+  {section:"Take Profit", items:[
+    "Silná S&D zóna","Lokální LQ","Close VWAP","nPOC / POC","Asian low / high","Close svíček"
+  ]},
+  {section:"Stop Loss", items:[
+    "6–12 pips"
+  ]}
+];
+
+function createCard(section, items){
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <header><h2>${section}</h2><span class="pill" data-pill>0%</span></header>
+    <div class="content">
+      <div class="progress">
+        <div class="bar"><span data-bar></span></div>
+        <div class="percent"><span data-pct>0</span>%</div>
+      </div>
+      <ul class="list" data-list></ul>
+    </div>
+  `;
+  const list = card.querySelector('[data-list]');
+
+  items.forEach((it, idx)=>{
+    if(typeof it === 'object' && it.subheader){
+      const sub = document.createElement('div');
+      sub.className = 'subheader';
+      sub.textContent = it.subheader;
+      list.appendChild(sub);
+      return;
+    }
+    const id = `${section}-${idx}`.replace(/\s+/g,'_');
+    const li = document.createElement('li');
+    li.className = 'item';
+    li.innerHTML = `<input type="checkbox" id="${id}"><label class="label" for="${id}">${it}</label>`;
+    list.appendChild(li);
+  });
+  return card;
+}
+
+function getQuality(){
+  const boxes = [...document.querySelectorAll('input[type="checkbox"]')];
+  const total = boxes.length;
+  const checked = boxes.filter(b=>b.checked).length;
+  const pct = Math.round(checked/Math.max(total,1)*100);
+  return {total, checked, pct};
+}
+
+function recalc(){
+  const q = getQuality();
+  document.getElementById('totalPct').textContent = q.pct;
+  document.getElementById('totalBar').style.width = q.pct + '%';
+
+  document.querySelectorAll('.card').forEach(card=>{
+    const items = [...card.querySelectorAll('input[type="checkbox"]')];
+    const tot = items.length;
+    const chk = items.filter(b=>b.checked).length;
+    const p = Math.round(chk/Math.max(tot,1)*100);
+    card.querySelector('[data-pct]').textContent = p;
+    card.querySelector('[data-bar]').style.width = p + '%';
+    card.querySelector('[data-pill]').textContent = p + '%';
+  });
+
+  const fItems = [...document.querySelectorAll('#focus-list input[type="checkbox"]')];
+  const fTot = fItems.length;
+  const fChk = fItems.filter(b=>b.checked).length;
+  const fPct = Math.round(fChk/Math.max(fTot,1)*100);
+  document.querySelector('[data-focus-pct]').textContent = fPct;
+  document.querySelector('[data-focus-bar]').style.width = fPct + '%';
+  document.querySelector('[data-focus-pill]').textContent = fPct + '%';
+
+  const boxes = [...document.querySelectorAll('input[type="checkbox"]')];
+  const state = boxes.map(b=>b.checked);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function hydrate(){
+  data.forEach(s=>cards.appendChild(createCard(s.section, s.items)));
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  const boxes = [...document.querySelectorAll('input[type="checkbox"]')];
+  if (Array.isArray(saved)) { boxes.forEach((b, i) => { if (saved[i]) b.checked = true; }); }
+  document.querySelectorAll('input[type="checkbox"]').forEach(b=>b.addEventListener('change', ()=>{recalc(); drawChart();}));
+  recalc();
+}
+hydrate();
+
+/* Toolbar actions */
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  document.querySelectorAll('input[type="checkbox"]').forEach(b=>b.checked=false);
+  recalc(); drawChart();
+});
+document.getElementById('btnSave').addEventListener('click', ()=>{
+  const state = localStorage.getItem(STORAGE_KEY)||'[]';
+  const blob = new Blob([state], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'trading_checklist_state.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('btnLoad').addEventListener('click', ()=>{
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='.json,application/json';
+  inp.addEventListener('change', ()=>{
+    const file = inp.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try{
+        const arr = JSON.parse(e.target.result);
+        const boxes = [...document.querySelectorAll('input[type="checkbox"]')];
+        boxes.forEach((b,i)=> b.checked = !!arr[i]);
+        recalc(); drawChart();
+      }catch(e){ alert('Soubor není platný JSON.') }
+    };
+    reader.readAsText(file);
+  });
+  inp.click();
+});
+
+/* ---------------- Save Trade with Modal ---------------- */
+const overlay = document.getElementById('overlay');
+const inpSymbol = document.getElementById('inpSymbol');
+const inpComment = document.getElementById('inpComment');
+const btnSaveTrade = document.getElementById('btnSaveTrade');
+const btnConfirm = document.getElementById('btnConfirm');
+const btnCancel = document.getElementById('btnCancel');
+const btnCloseX = document.getElementById('btnCloseX');
+const toast = document.getElementById('toast');
+
+document.querySelectorAll('.chip').forEach(ch => {
+  ch.addEventListener('click', ()=>{
+    const val = ch.getAttribute('data-fill');
+    inpSymbol.value = val;
+    inpSymbol.focus();
+  });
+});
+
+function openModal(){
+  overlay.classList.add('show');
+  overlay.removeAttribute('aria-hidden');
+  inpSymbol.focus();
+}
+function closeModal(){
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  inpSymbol.value = ''; inpComment.value = '';
+}
+btnSaveTrade.addEventListener('click', openModal);
+btnCancel.addEventListener('click', closeModal);
+btnCloseX.addEventListener('click', closeModal);
+overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay.classList.contains('show')) closeModal(); });
+
+function showToast(msg='Obchod uložen ✅'){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 2000);
+}
+
+btnConfirm.addEventListener('click', ()=>{
+  const q = getQuality();
+  const symbol = (inpSymbol.value||'').trim().toUpperCase();
+  const comment = (inpComment.value||'').trim();
+  const now = new Date();
+  const record = {
+    dateISO: now.toISOString(),
+    quality: q.pct,
+    checked: q.checked,
+    total: q.total,
+    symbol,
+    comment
+  };
+  const arr = JSON.parse(localStorage.getItem(TRADES_KEY) || '[]');
+  arr.push(record);
+  localStorage.setItem(TRADES_KEY, JSON.stringify(arr));
+  closeModal();
+  drawChart();
+  renderTable();
+  showToast('Obchod uložen ✅');
+});
+
+/* ---------------- Mini chart (Canvas) + Table ---------------- */
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+function getTrades(){ const arr = JSON.parse(localStorage.getItem(TRADES_KEY) || '[]'); return arr.slice(-30); }
+function getAllTrades(){ return JSON.parse(localStorage.getItem(TRADES_KEY) || '[]'); }
+function px(x){ return Math.round(x) + .5 } // crisp lines
+
+function drawChart(){
+  const trades = getTrades();
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // padding
+  const padL = 40, padR = 10, padT = 18, padB = 30;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(px(padL), px(padT)); ctx.lineTo(px(padL), px(padT+plotH)); // Y
+  ctx.lineTo(px(padL+plotW), px(padT+plotH)); // X
+  ctx.stroke();
+
+  // Y ticks
+  ctx.fillStyle = 'rgba(230,234,242,.85)';
+  ctx.font = '12px system-ui';
+  for(let i=0;i<=5;i++){
+    const val = i*20;
+    const y = padT + plotH - (val/100)*plotH;
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.beginPath(); ctx.moveTo(px(padL), px(y)); ctx.lineTo(px(padL+plotW), px(y)); ctx.stroke();
+    ctx.fillText(val.toString(), padL-24, y+4);
+  }
+  ctx.fillText('%', padL-18, padT+10);
+
+  if(trades.length === 0){
+    ctx.fillStyle = 'rgba(154,164,178,.9)';
+    ctx.fillText('Zatím žádné obchody. Ulož první pomocí „Uložit obchod“.', padL+10, padT+20);
+    return;
+  }
+
+  // points
+  const stepX = trades.length > 1 ? plotW/(trades.length-1) : 0;
+  const pts = trades.map((t,i)=>{
+    const x = padL + i*stepX;
+    const y = padT + plotH - (t.quality/100)*plotH;
+    return {x,y, t, i};
+  });
+
+  // line
+  ctx.strokeStyle = 'rgba(224,179,71,.9)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+  ctx.stroke();
+
+  // points with color by quality + symbol labels
+  pts.forEach(p=>{
+    let col = '#ff6b6b'; // red <40
+    if(p.t.quality >= 70) col = '#27d17f'; else if (p.t.quality >= 40) col = '#ffd56a';
+    // point
+    ctx.fillStyle = col; ctx.strokeStyle = '#0b0f14';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    // symbol label
+    if (p.t.symbol){
+      ctx.font = '11px system-ui';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(11,15,20,.85)';
+      ctx.strokeText(p.t.symbol, p.x+7, p.y-7);
+      ctx.fillStyle = 'rgba(230,234,242,.95)';
+      ctx.fillText(p.t.symbol, p.x+7, p.y-7);
+    }
+  });
+
+  // store for tooltip
+  canvas._points = pts;
+}
+
+function handleMove(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const pts = canvas._points || [];
+  let hit = null;
+  for(const p of pts){
+    const dx = p.x * (rect.width/canvas.width) - x;
+    const dy = p.y * (rect.height/canvas.height) - y;
+    if(Math.hypot(dx,dy) < 8){ hit = p; break; }
+  }
+  if(hit){
+    tooltip.style.display = 'block';
+    const d = new Date(hit.t.dateISO);
+    tooltip.textContent = `#${hit.i+1} • ${hit.t.quality}% • ${hit.t.symbol||'-'} • ${d.toLocaleString('cs-CZ')}${hit.t.comment? ' • '+hit.t.comment : ''}`;
+    tooltip.style.left = (e.clientX)+'px';
+    tooltip.style.top = (e.clientY-10)+'px';
+  } else {
+    tooltip.style.display = 'none';
+  }
+}
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mouseleave', ()=> tooltip.style.display='none');
+
+function renderTable(){
+  const tbody = document.querySelector('#tradesTable tbody');
+  tbody.innerHTML = '';
+  const arr = getAllTrades();
+  const last30 = arr.slice(-30).reverse(); // newest first
+  last30.forEach((t, idx)=>{
+    const tr = document.createElement('tr');
+    const d = new Date(t.dateISO);
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${d.toLocaleString('cs-CZ')}</td>
+      <td>${t.quality}% (${t.checked}/${t.total})</td>
+      <td><span class="tag">${(t.symbol||'').toString().toUpperCase()||'-'}</span></td>
+      <td>${(t.comment||'').replace(/[<>&]/g, s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+drawChart();
+renderTable();
+
+/* ---------------- Forex Sessions panel (with weekend detection) ---------------- */
+const tz = 'Europe/Prague';
+const clockEl = document.getElementById('clock');
+const sessionsEl = document.getElementById('sessions');
+
+const sessions = [
+  {name:'Frankfurt', flag:'🇩🇪', open:'08:00', close:'16:00'},
+  {name:'London',    flag:'🇬🇧', open:'09:00', close:'17:00'},
+  {name:'New York',  flag:'🇺🇸', open:'14:00', close:'22:00'},
+  {name:'Sydney',    flag:'🇦🇺', open:'22:00', close:'06:00'},
+  {name:'Tokyo',     flag:'🇯🇵', open:'00:00', close:'08:00'}
+];
+
+function parseHM(hm){ const [h,m] = hm.split(':').map(Number); return {h, m}; }
+function getPragueParts(){
+  const now = new Date();
+  return new Intl.DateTimeFormat('cs-CZ', {
+    timeZone: tz, hour12:false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', weekday:'short'
+  }).formatToParts(now).reduce((acc,p)=>{ acc[p.type]=p.value; return acc; },{});
+}
+function fmtHM(date){ return new Intl.DateTimeFormat('cs-CZ', {timeZone: tz, hour:'2-digit', minute:'2-digit', hour12:false}).format(date); }
+function addDays(d, days){ const x = new Date(d); x.setDate(x.getDate()+days); return x; }
+function setTimeHM(date, hm){ const {h,m} = parseHM(hm); const d = new Date(date); d.setHours(h,m,0,0); return d; }
+function diffHM(ms){ const totalMin = Math.max(0, Math.round(ms/60000)); const h = Math.floor(totalMin/60); const m = totalMin%60; return `${h}h ${m}m`; }
+function isWeekend(nowParts){
+  const wd = (nowParts.weekday || '').toLowerCase();
+  return wd.startsWith('so') || wd.startsWith('ne');
+}
+function isOpen(now, openHM, closeHM){
+  const open = setTimeHM(now, openHM);
+  let close = setTimeHM(now, closeHM);
+  if (close <= open) close = addDays(close, 1);
+  let start = open, end = close;
+  if (now < open) {
+    const prevOpen = addDays(setTimeHM(now, openHM), -1);
+    let prevClose = setTimeHM(now, closeHM);
+    if (prevClose <= prevOpen) prevClose = addDays(prevClose, 1);
+    if (now >= prevOpen && now < prevClose) { start = prevOpen; end = prevClose; }
+  }
+  return now >= start && now < end;
+}
+function nextChange(now, openHM, closeHM){
+  const open = setTimeHM(now, openHM);
+  let close = setTimeHM(now, closeHM);
+  if (close <= open) close = addDays(close, 1);
+  const openNow = isOpen(now, openHM, closeHM);
+  if (openNow){
+    let start = setTimeHM(now, openHM);
+    let end = setTimeHM(now, closeHM); if (end <= start) end = addDays(end, 1);
+    if (now < start) { start = addDays(setTimeHM(now, openHM), -1); end = setTimeHM(now, closeHM); if (end <= start) end = addDays(end, 1); }
+    return {type:'Closes in', ms: end - now};
+  } else {
+    let nextOpen = open;
+    if (now >= close) nextOpen = addDays(open, 1);
+    if (now < open) nextOpen = open;
+    return {type:'Opens in', ms: nextOpen - now};
+  }
+}
+
+function renderSessions(){
+  const parts = getPragueParts();
+  const now = new Date(Number(parts.year), Number(parts.month)-1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
+  const weekend = isWeekend(parts);
+  clockEl.textContent = fmtHM(now);
+  sessionsEl.innerHTML = '';
+
+  sessions.forEach(s => {
+    let statusHtml = '', detailHtml = '';
+    if (weekend){
+      statusHtml = `<span class="badge closed">🔴 Zavřeno (Víkend)</span>`;
+      detailHtml = `Open ${s.open} • Close ${s.close}`;
+    } else {
+      const openNow = isOpen(now, s.open, s.close);
+      const ch = nextChange(now, s.open, s.close);
+      statusHtml = `<span class="badge ${openNow ? 'open' : 'closed'}">${openNow ? '🟢 Otevřeno' : '🔴 Zavřeno'}</span>`;
+      detailHtml = `Open ${s.open} • Close ${s.close} <span class="row-muted">• ${ch.type} ${diffHM(ch.ms)}</span>`;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'session';
+    div.innerHTML = `
+      <div class="flag">${s.flag}</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;">
+          <strong>${s.name}</strong>
+          ${statusHtml}
+        </div>
+        <div class="ops">${detailHtml}</div>
+      </div>
+    `;
+    sessionsEl.appendChild(div);
+  });
+}
+
+renderSessions();
+setInterval(renderSessions, 60 * 1000);
+
+const toggleBtn = document.getElementById('toggleForex');
+if (toggleBtn){
+  const content = document.getElementById('forexContent');
+  toggleBtn.addEventListener('click', ()=> content.classList.toggle('collapsed'));
+}
+</script>
+</body>
+</html>
